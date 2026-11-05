@@ -3,15 +3,47 @@ import random
 from pathlib import Path
 
 
-def generate(words, length, order):
+def build_chains(words, order):
+    """Собрать переходы, сохраняя повторы.
+
+    >>> build_chains('One fish One fish'.split(), 1)
+    {('One',): ['fish', 'fish'], ('fish',): ['One']}
+    >>> build_chains('One two three'.split(), 2)
+    {('One', 'two'): ['three']}
+    """
     chains = {}
     for i in range(len(words) - order):
         key = tuple(words[i:i + order])
         chains.setdefault(key, []).append(words[i + order])
+    return chains
 
+
+def start_keys(chains):
+    """Найти начала с заглавной буквы.
+
+    >>> start_keys({('one',): ['Two'], ('Two',): ['one']})
+    [('Two',)]
+    >>> start_keys({('one',): ['two']})
+    Traceback (most recent call last):
+    ...
+    ValueError: В тексте нет подходящего начала
+    """
     starts = [key for key in chains if key[0][0].isupper()]
     if not starts:
         raise ValueError("В тексте нет подходящего начала")
+    return starts
+
+
+def generate(words, length, order):
+    """Сгенерировать текст нужной длины.
+
+    >>> generate('One two three'.split(), 5, 2)
+    'One two three One two'
+    >>> generate('One two three'.split(), 1, 2)
+    'One'
+    """
+    chains = build_chains(words, order)
+    starts = start_keys(chains)
 
     result = list(random.choice(starts))[:length]
     while len(result) < length:
